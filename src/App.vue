@@ -12,13 +12,18 @@
     <button @click="updateMyName">修改名称</button>
     <div>当前count：{{computedCount}}</div>
     <button @click="increment">修改count</button>
+    <todo-list />
   </div>
 </template>
 
 <script>
 import { reactive, ref, onMounted } from "vue";
+import TodoList from './components/TodoList/index';
 export default {
   name: "App",
+  components: {
+    TodoList
+  },
   setup(props, context) {
     const title = reactive({
       name: "学习vue3.0"
