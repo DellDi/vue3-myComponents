@@ -53,20 +53,11 @@
 </template>
 
 <script>
-import { ref, computed } from "vue";
+import { ref, computed, reactive } from "vue";
 import Todo from "./Todo";
-import {
-  todos,
-  setLocalStorage,
-  addTodo,
-  toggleTodo,
-  deleteTodo,
-  editTodo,
-  clearCompleted,
-  toggleAll
-} from "./useTodo";
+import { useTodo } from "./useTodo";
 
-const filters = {
+const filtersObj = {
   all: todos => todos,
   active: todos => todos.filter(todo => !todo.done),
   completed: todos => todos.filter(todo => todo.done)
@@ -77,23 +68,34 @@ export default {
   components: {
     Todo
   },
-  // filters: {
-  //   pluralize: (n, w) => (n === 1 ? w : w + "s"),
-  //   capitalize: s => s.charAt(0).toUpperCase() + s.slice(1)
-  // },
+  filters: {
+    pluralize: (n, w) => (n === 1 ? w : w + "s"),
+    capitalize: s => s.charAt(0).toUpperCase() + s.slice(1)
+  },
   setup() {
+    const {
+      todos,
+      setLocalStorage,
+      addTodo,
+      toggleTodo,
+      deleteTodo,
+      editTodo,
+      clearCompleted,
+      toggleAll
+    } = useTodo();
+    const filters = reactive(filtersObj);
     const visibility = ref("all");
-    const allChecked = computed(() => {
-      todos.every(todo => todo.done);
-    });
-    const filteredTodos = computed(() => {
-      filters[visibility.value](todos);
-    });
+    const allChecked = computed(() => todos.value.every(todo => todo.done));
+    const filteredTodos = computed(() =>
+      filters[visibility.value](todos.value)
+    );
     const remaining = computed(() => {
-      return todos.filter(todo => !todo.done).length;
+      return todos.value.filter(todo => !todo.done).length;
     });
     return {
+      todos,
       visibility,
+      filters,
       allChecked,
       filteredTodos,
       remaining,
@@ -124,9 +126,9 @@ export default {
   z-index: 1;
   position: relative;
   /*
-    Hack to remove background from Mobile Safari.
-    Can't use it globally since it destroys checkboxes in Firefox
-  */
+  Hack to remove background from Mobile Safari.
+  Can't use it globally since it destroys checkboxes in Firefox
+*/
 }
 .todoapp button {
   margin: 0;
@@ -242,99 +244,8 @@ export default {
   padding: 0;
   list-style: none;
 }
-.todoapp .todo-list li {
-  position: relative;
-  font-size: 24px;
-  border-bottom: 1px solid #ededed;
-}
-.todoapp .todo-list li:last-child {
-  border-bottom: none;
-}
-.todoapp .todo-list li.editing {
-  border-bottom: none;
-  padding: 0;
-}
-.todoapp .todo-list li.editing .edit {
-  display: block;
-  width: 506px;
-  padding: 12px 16px;
-  margin: 0 0 0 43px;
-}
-.todoapp .todo-list li.editing .view {
-  display: none;
-}
-.todoapp .todo-list li .toggle {
-  text-align: center;
-  width: 40px;
-  /* auto, since non-WebKit browsers doesn't support input styling */
-  height: auto;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  margin: auto 0;
-  border: none;
-  /* Mobile Safari */
-  -webkit-appearance: none;
-  appearance: none;
-}
-.todoapp .todo-list li .toggle {
-  opacity: 0;
-}
-.todoapp .todo-list li .toggle + label {
-  /*
-    Firefox requires `#` to be escaped - https://bugzilla.mozilla.org/show_bug.cgi?id=922433
-    IE and Edge requires *everything* to be escaped to render, so we do that instead of just the `#` - https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/7157459/
-  */
-  background-image: url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%22-10%20-18%20100%20135%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22none%22%20stroke%3D%22%23ededed%22%20stroke-width%3D%223%22/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center left;
-  background-size: 36px;
-}
-.todoapp .todo-list li .toggle:checked + label {
-  background-size: 36px;
-  background-image: url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%22-10%20-18%20100%20135%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22none%22%20stroke%3D%22%23bddad5%22%20stroke-width%3D%223%22/%3E%3Cpath%20fill%3D%22%235dc2af%22%20d%3D%22M72%2025L42%2071%2027%2056l-4%204%2020%2020%2034-52z%22/%3E%3C/svg%3E");
-}
-.todoapp .todo-list li label {
-  word-break: break-all;
-  padding: 15px 15px 15px 50px;
-  display: block;
-  line-height: 1;
-  font-size: 14px;
-  transition: color 0.4s;
-}
-.todoapp .todo-list li.completed label {
-  color: #d9d9d9;
-  text-decoration: line-through;
-}
-.todoapp .todo-list li .destroy {
-  display: none;
-  position: absolute;
-  top: 0;
-  right: 10px;
-  bottom: 0;
-  width: 40px;
-  height: 40px;
-  margin: auto 0;
-  font-size: 30px;
-  color: #cc9a9a;
-  transition: color 0.2s ease-out;
-  cursor: pointer;
-}
-.todoapp .todo-list li .destroy:hover {
-  color: #af5b5e;
-}
-.todoapp .todo-list li .destroy:after {
-  content: "×";
-}
-.todoapp .todo-list li:hover .destroy {
-  display: block;
-}
-.todoapp .todo-list li .edit {
-  display: none;
-}
-.todoapp .todo-list li.editing:last-child {
-  margin-bottom: -1px;
-}
+
+
 .todoapp .footer {
   color: #777;
   position: relative;
@@ -351,7 +262,9 @@ export default {
   left: 0;
   height: 40px;
   overflow: hidden;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2), 0 8px 0 -3px #f6f6f6, 0 9px 1px -3px rgba(0, 0, 0, 0.2), 0 16px 0 -6px #f6f6f6, 0 17px 2px -6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2), 0 8px 0 -3px #f6f6f6,
+    0 9px 1px -3px rgba(0, 0, 0, 0.2), 0 16px 0 -6px #f6f6f6,
+    0 17px 2px -6px rgba(0, 0, 0, 0.2);
 }
 .todoapp .todo-count {
   float: left;
@@ -415,7 +328,7 @@ export default {
 }
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
   .todoapp .toggle-all,
-.todoapp .todo-list li .toggle {
+  .todoapp .todo-list li .toggle {
     background: none;
   }
   .todoapp .todo-list li .toggle {

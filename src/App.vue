@@ -26,7 +26,7 @@ export default {
   },
   setup(props, context) {
     const title = reactive({
-      name: "学习vue3.0"
+      name: "vue3.0"
     });
     const user = ref("沧海一粟");
     const updateMyName = () => {

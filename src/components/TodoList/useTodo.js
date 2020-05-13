@@ -7,28 +7,29 @@
  */
 import { ref } from "vue";
 
-const defalutList = [
-  { text: "star this repository", done: false },
-  { text: "fork this repository", done: false },
-  { text: "follow author", done: false },
-  { text: "vue-element-admin", done: true },
-  { text: "vue", done: true },
-  { text: "element-ui", done: true },
-  { text: "axios", done: true },
-  { text: "webpack", done: true },
-];
-
 const STORAGE_KEY = "todos";
+let defalutList = window.localStorage.getItem(STORAGE_KEY)
+  ? JSON.parse(window.localStorage.getItem(STORAGE_KEY))
+  : [
+      { text: "star this repository", done: false },
+      { text: "fork this repository", done: false },
+      { text: "follow author", done: false },
+      { text: "vue-element-admin", done: true },
+      { text: "vue", done: true },
+      { text: "element-ui", done: true },
+      { text: "axios", done: true },
+      { text: "webpack", done: true },
+    ];
 
 export function useTodo() {
-  const todos = ref(defalutList);
+  let todos = ref(defalutList);
   const setLocalStorage = () => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(todos.value));
   };
   const addTodo = (e) => {
     const text = e.target.value;
     if (text.trim()) {
-      todos.push({
+      todos.value.push({
         text,
         done: false,
       });
@@ -41,7 +42,7 @@ export function useTodo() {
     setLocalStorage();
   };
   const deleteTodo = (todo) => {
-    todos.splice(todos.indexOf(todo), 1);
+    todos.value.splice(todos.value.indexOf(todo), 1);
     setLocalStorage();
   };
   const editTodo = ({ todo, value }) => {
@@ -49,11 +50,11 @@ export function useTodo() {
     setLocalStorage();
   };
   const clearCompleted = () => {
-    todos = todos.filter((todo) => !todo.done);
+    todos = todos.value.filter((todo) => !todo.done);
     setLocalStorage();
   };
   const toggleAll = ({ done }) => {
-    todos.forEach((todo) => {
+    todos.value.forEach((todo) => {
       todo.done = done;
       setLocalStorage();
     });
